@@ -1,5 +1,10 @@
-Waggle Dance Detector
+SWP 2022: Detection of Waggle Dances of Honeybees
 =====================
+
+This repository is forked from the original BeesBook waggle dance detection software repository. (https://github.com/BioroboticsLab/bb_wdd2)
+
+
+The following text is a copy of the Readme.md of the BeesBook Detector.
 
 This repository contains the current state of the BeesBook waggle dance detection software.
 Since its publication in 2017 [Wario et al., 2017](https://doi.org/10.1371/journal.pone.0188626), most of the software has been rewritten and improved. The original software can be found here: [bb_wdd](https://github.com/BioroboticsLab/bb_wdd/).
