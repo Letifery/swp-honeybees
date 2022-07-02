@@ -72,7 +72,3 @@ dl = DataLoader()
 print(list(dl.get_pickle(path_angles)))
 print(list(dl.get_data([r"I:\tmp_swp\wdd_ground_truth"])))
 '''
-path_angles = ["https://box.fu-berlin.de/s/nyweXr2oQzfHmHp/download?path=%2F&files=ground_truth_wdd_angles.pickle"]
-dl = DataLoader()
-print(list(dl.get_pickle(path_angles)))
-print(list(dl.get_data([r"I:\tmp_swp\wdd_ground_truth"]))[0])
