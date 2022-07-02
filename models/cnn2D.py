@@ -8,8 +8,7 @@ from keras.models import Sequential, load_model
 from tensorflow.keras import datasets, layers, models
 from tensorflow.keras.layers import Dense, BatchNormalization
 
-
-class Models():
+class ConvNet():
     def cnn2D40x32x32(dropoutRate = 0.225, random_seed = 42):
         model = models.Sequential([
             layers.Conv2D(filters = 32, kernel_size = 5, input_shape = (40,32,32)),
