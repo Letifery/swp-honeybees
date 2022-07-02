@@ -64,7 +64,7 @@ class DataLoader():
                             print("[ERROR]", str(e))
                             raise SystemExit("Something went horribly wrong with the .zip archive at: %s" % path)
                 yield([data, jsondata, path])
-#Beispiele:
+# Example:
 '''
 path_angles = ["https://box.fu-berlin.de/s/nyweXr2oQzfHmHp/download?path=%2F&files=ground_truth_wdd_angles.pickle"]
 path_angles = [r"I:\tmp_swp\ground_truth_wdd_angles.pickle"]
