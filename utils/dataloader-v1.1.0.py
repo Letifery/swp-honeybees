@@ -4,10 +4,10 @@ import pickle
 import pathlib
 import json
 import os
-from io import StringIO
-from tifffile import imread
-import zipfile
+import zipfile, requests, io
+import time
 
+from tifffile import imread
 from PIL import Image
 from contextlib import contextmanager
 from urllib import request, error
@@ -25,25 +25,35 @@ class DataLoader():
     def get_pickle(self, pointers:[str]):
         #pointers = URL/Path pointing to .pickle
         for pointer in pointers:
-            try:                                                #Tries to grab the .pickle from an URL
+            try:                                                    #Tries to grab the .pickle from an URL
                 yield(pickle.load(request.urlopen(pointer)))
-            except NotImplementedError:                         #PosixPath/WindowsPath compability (URL)
+            except NotImplementedError:                             #PosixPath/WindowsPath compability (URL)
                 with self.set_posix_windows():
                     yield(pickle.load(request.urlopen(pointer)))
-            except error.URLError:                              #Checks if it is a dir.path if URL-grab failed
+            except (error.URLError, ValueError):                    #Checks if it is a dir.path if URL-grab failed
                 try:
                     yield(pd.read_pickle(pointer))
-                except NotImplementedError:                     #PosixPath/WindowsPath compability (Path)
+                except NotImplementedError:                         #PosixPath/WindowsPath compability (Path)
                     with self.set_posix_windows():
                         yield(pd.read_pickle(pointer))
             except:
-                raise FileNotFoundError("[ERROR] Given path/URL '%s' doesn't point to a .pickle" % path)
+                raise FileNotFoundError("[ERROR] Given path/URL '%s' doesn't point to a .pickle" % pointer)
                 
     def get_data(self, paths:[str], modes:[str] = ["unpackpng", "incpath"]):
         #unpackpng -> Png to np.array([int])
         #incpath -> Adds a path to each data entry
-        for root in paths:
+        fpaths = []
+        for path in paths:                                          
+            try:
+                with zipfile.ZipFile(io.BytesIO(requests.get(path).content)) as archive:
+                    sdir = [f.path for f in os.scandir(os.getcwd()) if f.is_dir()]
+                    archive.extractall(os.getcwd())
+                    fpaths += [x for x in [f.path for f in os.scandir(os.getcwd()) if f.is_dir()] if x not in sdir]
+            except:
+                fpaths += [path]
+        for root in fpaths:
             for path, _, files in os.walk(root):
+                if files == []: continue
                 data, jsondata = None, None
                 for name in files:
                     if pathlib.Path(name).suffix == ".json":
@@ -64,6 +74,15 @@ class DataLoader():
                             print("[ERROR]", str(e))
                             raise SystemExit("Something went horribly wrong with the .zip archive at: %s" % path)
                 yield([data, jsondata, path])
+                
+# Examples:
+'''
+path_angles = ["https://box.fu-berlin.de/s/nyweXr2oQzfHmHp/download?path=%2F&files=ground_truth_wdd_angles.pickle"]
+path_angles = [r"I:\tmp_swp\ground_truth_wdd_angles.pickle"]
+dl = DataLoader()
+print(list(dl.get_pickle(path_angles)))
+print(list(dl.get_data([r"I:\tmp_swp\wdd_ground_truth"])))
+'''
 # Example:
 '''
 path_angles = ["https://box.fu-berlin.de/s/nyweXr2oQzfHmHp/download?path=%2F&files=ground_truth_wdd_angles.pickle"]
