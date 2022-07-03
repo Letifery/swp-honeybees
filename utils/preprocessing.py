@@ -1,5 +1,4 @@
 import time 
-import cv2
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -74,47 +73,8 @@ class Preprocessing():
                 plt.xlabel('Principal components')
                 plt.plot(k)
                 plt.show()
-
-        def scale_X(new_size:(int,int), show_img=False):
-            t = time.time()
-            if type(show_img) == str or show_img == True:
-                tmpr = randrange(len(self.X))
-                idx = [0,0] if show_img=="fst" else [0,-1] if show_img=="lst" else [tmpr, randrange(len(X[tmpr]))]
-                _, axes = plt.subplots(nrows=1, ncols=2)
-                axes[0].imshow(self.X[idx[0]][idx[1]], cmap=plt.cm.gray)
-            for i in range(len(self.X)):
-                for k,x in enumerate(self.X[i]):
-                    self.X[i][k] = cv2.resize(self.X[i][k], (new_size[0], new_size[1]))
-            if type(show_img) == str or show_img == True:
-                axes[1].imshow(self.X[idx[0]][idx[1]], cmap=plt.cm.gray) 
-                plt.show()
-            print("[SCALE] <%s> time needed: %s seconds" % (new_size, time.time()-t))
-
-        def norm_X(nrange=[0,1]):
-            t = time.time()
-            tmp = np.array([a for b in self.X for a in b])
-            old_min, old_max = np.amin(tmp), np.amax(tmp)
-            for i in range(len(self.X)):
-                for k in range(len(self.X[i])):
-                    self.X[i][k] = ((self.X[i][k] - old_min)/(old_max-old_min))*(nrange[1]-nrange[0])+nrange[0]
-            print("[NORM] <%s> time needed: %s seconds" % (nrange, time.time()-t))
     
-        def difference_X(step:int=2, dummy:bool=True):
-            t = time.time()
-            for i in range(len(self.X)):
-                for k in range(len(self.X[i])):
-                    try:
-                        self.X[i][k] = self.X[i][k]-self.X[i+step][k+step]
-                    except IndexError:
-                        if dummy:
-                            self.X[i][k] = np.zeros(self.X[i][k].shape)
-                        else:
-                            continue
-            print("[DIFF] <%s,%s> time needed: %s seconds" % (step, dummy, time.time()-t))
-    
-        func_dic = {"cut": cut_X, "slice": slice_X_uniformly, "scale": scale_X, "PCA": PCA_X,
-                    "norm": norm_X, "diff": difference_X}
-       
+        func_dic = {"cut": cut_X, "slice": slice_X_uniformly, "PCA": PCA_X}
         for x in mode:
             func_dic[x[0]](*x[1])
         return self.X
