@@ -73,7 +73,7 @@ for i in range(len(hyper_X)):
     model = m_cnn3d.setup_model(Xpp)
     
     try:
-        #Mehrmals Models trainieren (!GPU)
+        # train models multiple times (!GPU)
         results, summary_string = m_cnn3d.evaluate_model(model, Xpp, y_one_hot)
     except tf.errors.ResourceExhaustedError:
         with tf.device('/cpu:0'):
