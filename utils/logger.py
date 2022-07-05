@@ -1,4 +1,5 @@
 import os
+import platform
 
 from pathlib import Path
 from datetime import datetime
@@ -11,10 +12,11 @@ class Logger:
             self.filename = "%s-%s.log" % (Path(__file__).stem, datetime.now().strftime("%d-%m-%Y_%H-%M-%S"))
  
     def log_data(self, data:[[]], folder="datalogs"):
-        if not os.path.exists(os.path.join(Path(__file__).parent.resolve(),"logs\%s" % folder)):
-            os.makedirs(os.path.join(Path(__file__).parent.resolve(), "logs\%s" % folder))
+        sl = "/" if platform.system() == "Linux" else "\\."[0]
+        if not os.path.exists(os.path.join(Path(__file__).parent.parent.resolve(),"logs"+sl+"%s" % folder)):
+            os.makedirs(os.path.join(Path(__file__).parent.parent.resolve(), "logs"+sl+"%s" % folder))
         try:
-            with open(os.path.join(Path(__file__).parent.resolve(), "logs\%s\%s" % (folder, self.filename)), "a") as log:
+            with open(os.path.join(Path(__file__).parent.parent.resolve(), "logs"+sl+"%s" % folder + sl + "%s" % self.filename), "a") as log:
                 for row in data:
                     log.write(((("%s, "*len(row))[:-2]) % tuple(row))+"\n")
             return(1)
