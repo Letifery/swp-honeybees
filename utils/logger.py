@@ -12,7 +12,7 @@ class Logger:
             self.filename = "%s-%s.log" % (Path(__file__).stem, datetime.now().strftime("%d-%m-%Y_%H-%M-%S"))
  
     def log_data(self, data:[[]], folder="datalogs"):
-        sl = "/" if platform.system() == "Linux" else "\\."[0]
+        sl = "\\."[0] if platform.system() == "Windows" else "/"
         if not os.path.exists(os.path.join(Path(__file__).parent.parent.resolve(),"logs"+sl+"%s" % folder)):
             os.makedirs(os.path.join(Path(__file__).parent.parent.resolve(), "logs"+sl+"%s" % folder))
         try:
