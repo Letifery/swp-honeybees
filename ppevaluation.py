@@ -34,39 +34,34 @@ def aggregate_data(data, pickle_file):
     return (images, (angles, classes), json_files, paths)
     
 #setup
-path_data = r"I:\tmp_swp\wdd_ground_truth"
-path_pickle = r"I:\tmp_swp\ground_truth_wdd_angles.pickle"
-path_testsuite = r"I:\tmp_swp\data\pptestsuite.json"
-#Sets the filename prefix for the logging tool
-model_name = "cnn3D-mv2"
+MODEL_NAME = "cnn3D-mv2"
+ID_START = 3
+
+PATH_DATA = r"I:\tmp_swp\wdd_ground_truth"
+PATH_PICKLE = r"I:\tmp_swp\ground_truth_wdd_angles.pickle"
+PATH_TESTSUITE = r"I:\tmp_swp\data\pptestsuite.json"
 
 dl = DataLoader()
-data_logger = Logger("review_%s.log" % model_name)
-#Below should be uncommented for the first iteration
-data_logger.log_data([["ID", "CPU", "runtime", "loss", "cat_accuracy", "cat_entropy", "pp_layers", "confusion_matrix"]])
+data_logger = Logger("review_%s.log" % MODEL_NAME)
+#The line below just generates the header for the datalogs, which means that you should only run this once per model
+#data_logger.log_data([["ID", "CPU", "runtime", "loss", "cat_accuracy", "cat_entropy", "pp_layers", "confusion_matrix"]])
 gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.85)
 sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 
-data = list(dl.get_data([path_data]))
-pickle_file = list(dl.get_pickle([path_pickle]))[0]
+data = list(dl.get_data([PATH_DATA]))
+pickle_file = list(dl.get_pickle([PATH_PICKLE]))[0]
 
 
 X, Y, json_files, paths = aggregate_data(data, pickle_file)
 Y_classes, Y_angles = Y[1], Y[0]
 y_one_hot, _ = y_to_numbers(Y_classes)
 
-ID_START = 0
-
-hyper_X = list(dl.get_json([path_testsuite]))[0]["testsuiteSlice"]
-
-###############################
-#gc.set_debug(gc.DEBUG_STATS)
-###############################
+hyper_X = list(dl.get_json([PATH_TESTSUITE]))[0]["testsuiteSlice"]
     
 for i in range(len(hyper_X)):
     pp = Preprocessing(deepcopy(X))
     Xpp = pp.preprocess_data(hyper_X[i])
-    summary_logger = Logger("%s-%s.log" % (model_name,(i+ID_START)))
+    summary_logger = Logger("%s-%s.log" % (MODEL_NAME,(i+ID_START)))
     
     OOM_interrupt = 0
     t = time.time()
