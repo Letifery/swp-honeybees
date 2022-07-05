@@ -39,7 +39,7 @@ class DataLoader():
             except:
                 raise FileNotFoundError("[ERROR] Given path/URL '%s' doesn't point to a .pickle" % pointer)
                 
-    def get_data(self, paths:[str], modes:[str] = ["unpackpng", "incpath"]):
+    def get_data(self, paths:[str]):
         #unpackpng -> Png to np.array([int])
         #incpath -> Adds a path to each data entry
         fpaths = []
@@ -74,20 +74,8 @@ class DataLoader():
                             print("[ERROR]", str(e))
                             raise SystemExit("Something went horribly wrong with the .zip archive at: %s" % path)
                 yield([data, jsondata, path])
-                
-# Examples:
-'''
-path_angles = ["https://box.fu-berlin.de/s/nyweXr2oQzfHmHp/download?path=%2F&files=ground_truth_wdd_angles.pickle"]
-path_angles = [r"I:\tmp_swp\ground_truth_wdd_angles.pickle"]
-dl = DataLoader()
-print(list(dl.get_pickle(path_angles)))
-print(list(dl.get_data([r"I:\tmp_swp\wdd_ground_truth"])))
-'''
-# Example:
-'''
-path_angles = ["https://box.fu-berlin.de/s/nyweXr2oQzfHmHp/download?path=%2F&files=ground_truth_wdd_angles.pickle"]
-path_angles = [r"I:\tmp_swp\ground_truth_wdd_angles.pickle"]
-dl = DataLoader()
-print(list(dl.get_pickle(path_angles)))
-print(list(dl.get_data([r"I:\tmp_swp\wdd_ground_truth"])))
-'''
+
+    def get_json(self, pointers):
+        for pointer in pointers:
+            with open(pointer) as f:
+                yield(json.load(f))
