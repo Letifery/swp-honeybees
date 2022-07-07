@@ -71,7 +71,7 @@ X, Y, json_files, paths = aggregate_data(data, pickle_file)
 Y_classes, Y_angles = Y[1], Y[0]
 y_one_hot, _ = y_to_numbers(Y_classes)
 
-hyper_X = list(dl.get_json([PATH_TESTSUITE]))[0]["testsuiteA"] + list(dl.get_json([PATH_TESTSUITE]))[0]["testsuiteB"]
+hyper_X = list(dl.get_json([PATH_TESTSUITE]))[0]["testsuiteA"]
 
 for i in range(len(hyper_X)):
     OOM_interrupt = 0
