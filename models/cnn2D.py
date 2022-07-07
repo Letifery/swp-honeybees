@@ -16,9 +16,13 @@ import tensorflow_addons as tfa
 import numpy as np
 
 class ConvNet2D():
-    def setup_model(self, X, dropoutRate = 0.225, random_seed = 42):
+    def setup_model(self, X,
+                    num_of_pred_classes = 5,
+                    dropoutRate = 0.225,
+                    random_seed = 42):
+
         model = models.Sequential([
-            layers.Conv2D(filters = 32, kernel_size = 5, input_shape = (np.shape(X)[1],32,32)),
+            layers.Conv2D(filters = 32, kernel_size = 5, input_shape = (np.shape(X)[1],np.shape(X)[2],np.shape(X)[3])),
             layers.BatchNormalization(),
             layers.Activation('relu'),
 
@@ -42,17 +46,16 @@ class ConvNet2D():
             layers.BatchNormalization(),
             layers.Activation(tfa.activations.mish),
 
-            layers.Conv2D(filters = 5, kernel_size = (4,4)),
+            layers.Conv2D(filters = num_of_pred_classes, kernel_size = (4,4)),
             layers.BatchNormalization(),
             layers.Activation(GLU(bias = True, dim = 1, name='glu')),
-
 
             layers.AlphaDropout(rate = dropoutRate, seed = random_seed),
 
             layers.Flatten(),
             layers.Dense(64, activation = 'relu', kernel_initializer='he_uniform'),
             layers.Dense(8, activation = 'relu', kernel_initializer='he_uniform'),
-            layers.Dense(5, activation = 'softmax')
+            layers.Dense(num_of_pred_classes, activation = 'softmax')
             ])
 
         model.compile(optimizer = "Adam",
@@ -62,10 +65,15 @@ class ConvNet2D():
         return model
 
 
-    def evaluate_model(self, model, X, Y, num_of_classes = 5, batch_size = 2, epochs = 30):
+    def evaluate_model(self, model, X, Y,
+                        path_load_save_model = "/home/vincent/Desktop/Models/test.hdf5",
+                        num_of_classes = 5,
+                        batch_size = 2,
+                        epochs = 25):
+
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state = 42, stratify = Y)
 
-        callbacks = [ModelCheckpoint(filepath = "/home/vincent/Desktop/Models/test.hdf5",
+        callbacks = [ModelCheckpoint(filepath = path_load_save_model,
                                          monitor = 'val_loss',
                                          verbose = 1,
                                          save_best_only = True,
@@ -74,9 +82,7 @@ class ConvNet2D():
         hist = model.fit(x= X_train,y = y_train, epochs = epochs,
                validation_data=(X_test, y_test), batch_size = batch_size, callbacks = callbacks)
 
-
-        model = load_model( "/home/vincent/Desktop/Models/test.hdf5" , custom_objects={'GLU': GLU})
-
+        model = load_model( path_load_save_model , custom_objects={'GLU': GLU})
 
         _ = model.evaluate(x = X_test,y = y_test)
 
@@ -89,4 +95,3 @@ class ConvNet2D():
 
         #[loss, Accuracy, ct], confusion_matrix, summary stream
         return([model.evaluate(x = X_test ,y = y_test), conf], summary_string)
-
