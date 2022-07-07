@@ -2,8 +2,9 @@ from utils.dataloader import DataLoader
 from utils.logger import Logger
 from utils.preprocessing import Preprocessing
 from models.cnn3d import ConvNet3D
-
+from models.cnn2D import ConvNet2D
 from copy import deepcopy
+
 import tensorflow as tf
 import time
 import numpy as np
