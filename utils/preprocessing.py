@@ -45,7 +45,7 @@ class Preprocessing():
                     reduces the number of images to n, excludes every len(videoClip)/n image
                 - slice_with_prob (n:int, kindOfProb: str)
                     exluedes images based on a propablity distibution
-                    kindOfProb: start, end, gauss
+                    kindOfProb: start, end, gauss, endStart
                 - crop_normalize (scale_counter: int, scale_denominator:int)
                     normalizes the data and crops the images with the scale_factor (scale_factor = scale_counter/ scale_denominator)
                 - PCA: (n:int, inc:bool, img_show:str or bool, var_cumu:n)
@@ -57,7 +57,6 @@ class Preprocessing():
         ----------
         X       : The transformed dataset with all modification layers applied (retains the same shape)
         '''
-
         def cut_X(start, end):
             t = time.time()
             for i in range(len(self.X)):
@@ -86,11 +85,11 @@ class Preprocessing():
         def slice_with_prob(n, kindOfProb = "gauss"):
             t = time.time()
 
-            def prob_start(n):
+            def prob_start_distribution(n):
                 prob = np.array([1/index for index in range(1,n+1)])
                 return prob/ prob.sum(axis=0,keepdims=1)
 
-            def prob_end(n):
+            def prob_end_distribution(n):
                 prob = np.flip([1/index for index in range(1,n+1)])
                 return prob/ prob.sum(axis=0,keepdims=1)
 
@@ -98,10 +97,16 @@ class Preprocessing():
                 prob = np.abs(np.random.normal(0.25, 0.1, size=(n, )))
                 return prob/ prob.sum(axis=0,keepdims=1)
 
-            kindOfProb_dic = {"gauss": prob_gauss_distribution, "start": prob_start, "end": prob_end}
+            def prob_start_end_distribution(n):
+                    prob_end = [np.power(num, 2) for num in range(n//2)]
+                    prob_start = np.flip(prob_end)
+                    prob = np.concatenate([prob_start, prob_end]) if len(prob_start) + len(prob_end) == n else  np.concatenate([prob_start,  np.append(prob_end, prob_start[0])])
+                    return prob/ prob.sum(axis=0,keepdims=1)
+
+            kindOfProb_dic = {"gauss": prob_gauss_distribution, "start": prob_start_distribution,
+                                "end": prob_end_distribution, "endStart": prob_start_end_distribution}
 
             new_X = self.return_new_X(n)
-
             for i, videoClip in enumerate(self.X):
                 new_X[i] = np.array(videoClip)[np.sort(np.random.choice(range(len(videoClip)), n, replace = False, p = kindOfProb_dic[kindOfProb](len(videoClip))))]
             self.X = new_X
@@ -172,10 +177,10 @@ class Preprocessing():
                 scale_factor = scale_counter/ scale_denominator
                 crop = iaa.Sequential([iaa.Resize(scale_factor),
                                        iaa.CenterCropToFixedSize(np.shape(self.X)[2], np.shape(self.X)[3]),])
-                
+
                 normalize_to_float = iaa.Sequential([iaa.Multiply(2.0 / 255.0),
                                                      iaa.Add(-1.0)])
-                
+
                 new_X = np.zeros((np.shape(self.X)[0],
                                   np.shape(self.X)[1],
                                   int(scale_factor * np.shape(self.X)[2]),
