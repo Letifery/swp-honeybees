@@ -1,14 +1,20 @@
 from utils.dataloader import DataLoader
 from utils.logger import Logger
 from utils.preprocessing import Preprocessing
-from models.cnn3d import ConvNet3D
 from models.cnn2D import ConvNet2D
+from models.cnn3d import ConvNet3D
 from copy import deepcopy
+from traceback import format_exc
 
 import tensorflow as tf
 import time
 import numpy as np
-import sys, gc
+import os, sys, gc
+import platform
+import pandas as pd
+import warnings
+
+warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning) 
 
 def y_to_numbers(y,all_5_classes=False):
     label_to_number={
@@ -35,8 +41,7 @@ def aggregate_data(data, pickle_file):
     return (images, (angles, classes), json_files, paths)
     
 #setup
-MODEL_NAME = "cnn3D-mv2"
-ID_START = 3
+MODEL_NAME = "TESTcnn3D-mv2"
 
 PATH_DATA = r"I:\tmp_swp\wdd_ground_truth"
 PATH_PICKLE = r"I:\tmp_swp\ground_truth_wdd_angles.pickle"
@@ -44,8 +49,17 @@ PATH_TESTSUITE = r"I:\tmp_swp\data\pptestsuite.json"
 
 dl = DataLoader()
 data_logger = Logger("review_%s.log" % MODEL_NAME)
-#The line below just generates the header for the datalogs, which means that you should only run this once per model
-#data_logger.log_data([["ID", "CPU", "runtime", "loss", "cat_accuracy", "cat_entropy", "pp_layers", "confusion_matrix"]])
+
+sl = "/" if platform.system() == "Linux" else "\\."[0]
+
+if not os.path.exists("logs%sdatalogs_%s%sreview_%s.log" % (sl, MODEL_NAME, sl, MODEL_NAME)):
+    id_start = 0
+    data_logger.log_data([["ID", "CPU", "t_overall", "loss", "cat_accuracy", "cat_entropy", "t_setup", 
+                    "t_pp", "t_model", "t_evmodel", "pp_layers", "confusion_matrix"]], "datalogs_%s" % MODEL_NAME)
+else:
+    df = pd.read_csv("logs%sdatalogs_%s%sreview_%s.log" % (sl, MODEL_NAME, sl, MODEL_NAME), on_bad_lines='skip')
+    id_start = len(df.index)
+    
 gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.85)
 sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 
@@ -57,28 +71,44 @@ X, Y, json_files, paths = aggregate_data(data, pickle_file)
 Y_classes, Y_angles = Y[1], Y[0]
 y_one_hot, _ = y_to_numbers(Y_classes)
 
-hyper_X = list(dl.get_json([PATH_TESTSUITE]))[0]["testsuiteSlice"]
-    
+hyper_X = list(dl.get_json([PATH_TESTSUITE]))[0]["testsuiteA"]
+
 for i in range(len(hyper_X)):
-    pp = Preprocessing(deepcopy(X))
-    Xpp = pp.preprocess_data(hyper_X[i])
-    summary_logger = Logger("%s-%s.log" % (MODEL_NAME,(i+ID_START)))
-    
     OOM_interrupt = 0
-    t = time.time()
+    runtimes = [0]*4
     
-    cmodel = ConvNet3D()
-    model = cmodel.setup_model(Xpp)
     try:
-        results, summary_string = cmodel.evaluate_model(model, Xpp, y_one_hot)
+        t = time.time()
+        Xtmp = deepcopy(X)
+        cmodel = ConvNet3D()
+        pp = Preprocessing(Xtmp)
+        summary_logger = Logger("summary_%s_%s.log" % ((i+id_start), MODEL_NAME))
+        runtimes[0] = time.time()-t
+        
+        X_pp = pp.preprocess_data(hyper_X[i])
+        runtimes[1] = time.time()-(t+sum(runtimes))
+        
+        model = cmodel.setup_model(X_pp)
+        runtimes[2] = time.time()-(t+sum(runtimes))
+        
+        results, summary_string = cmodel.evaluate_model(model, X_pp, y_one_hot)
+        runtimes[3] = time.time()-(t+sum(runtimes))
+        
     except tf.errors.ResourceExhaustedError:
         with tf.device('/cpu:0'):
-            t = time.time()
             print("\033[93m[WARNING] Could not use CUDA for testset iteration %s, will switch to CPU instead\033[0m" % i)
             OOM_interrupt = 1
-            results, summary_string = cmodel.evaluate_model(model, Xpp, y_one_hot)
-    data_logger.log_data([[(i+ID_START), OOM_interrupt, time.time()-t, *results[0], hyper_X[i], results[1]]])
-    summary_logger.log_data([[summary_string]], "summaries")
+            t = time.time()
+            results, summary_string = cmodel.evaluate_model(model, X_pp, y_one_hot)
+            runtimes[3] = time.time()-t
+    except Exception:
+        data_logger.log_data([[(i+id_start)]+["ERROR"]*11], "datalogs_%s" % MODEL_NAME)
+        summary_logger.log_data([[format_exc()]], "datalogs_%s" % MODEL_NAME)
+    else:
+        data_logger.log_data([[(i+id_start), OOM_interrupt, sum(runtimes), *results[0], *runtimes, 
+                            str(hyper_X[i]), str(results[1])]], "datalogs_%s" % MODEL_NAME)
+        summary_logger.log_data([[summary_string]], "datalogs_%s" % MODEL_NAME)
+        del cmodel, pp, summary_logger
+    finally:
+        gc.collect()
 
-    del cmodel, pp
-    gc.collect()
