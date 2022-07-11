@@ -43,9 +43,9 @@ class Preprocessing():
                     (i.e. slice([0,1,2,3,4],[2]) -> [0,2,4])
                 - slice_X_uniformly: (n:int)
                     reduces the number of images to n, excludes every len(videoClip)/n image
-                - slice_with_prob (n:int, kindOfProb: str)
+                - slice_with_prob (n:int, kind_of_prob: str)
                     exluedes images based on a propablity distibution
-                    kindOfProb: start, end, gauss, endStart
+                    kind_of_prob: start, end, gauss, endStart
                 - crop_normalize (scale_counter: int, scale_denominator:int)
                     normalizes the data and crops the images with the scale_factor (scale_factor = scale_counter/ scale_denominator)
                 - PCA: (n:int, inc:bool, img_show:str or bool, var_cumu:n)
@@ -82,7 +82,7 @@ class Preprocessing():
             self.X = new_X
             print("[SLICE] <%s> time needed: %s seconds" % (n, time.time()-t))
 
-        def slice_with_prob(n, kindOfProb = "gauss"):
+        def slice_with_prob(n, kind_of_prob = "gauss"):
             t = time.time()
 
             def prob_start_distribution(n):
@@ -103,12 +103,12 @@ class Preprocessing():
                     prob = np.concatenate([prob_start, prob_end]) if len(prob_start) + len(prob_end) == n else  np.concatenate([prob_start,  np.append(prob_end, prob_start[0])])
                     return prob/ prob.sum(axis=0,keepdims=1)
 
-            kindOfProb_dic = {"gauss": prob_gauss_distribution, "start": prob_start_distribution,
+            kind_of_prob_dic = {"gauss": prob_gauss_distribution, "start": prob_start_distribution,
                                 "end": prob_end_distribution, "endStart": prob_start_end_distribution}
 
             new_X = self.return_new_X(n)
             for i, videoClip in enumerate(self.X):
-                new_X[i] = np.array(videoClip)[np.sort(np.random.choice(range(len(videoClip)), n, replace = False, p = kindOfProb_dic[kindOfProb](len(videoClip))))]
+                new_X[i] = np.array(videoClip)[np.sort(np.random.choice(range(len(videoClip)), n, replace = False, p = kind_of_prob_dic[kind_of_prob](len(videoClip))))]
             self.X = new_X
             print("[SLICE RANDOM] <%s> time needed: %s seconds" % (n, time.time()-t))
 
