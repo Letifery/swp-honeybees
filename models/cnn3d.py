@@ -2,9 +2,11 @@ from sklearn.model_selection import train_test_split
 from keras import datasets, layers, models
 from io import StringIO
 
+from keras.callbacks import ModelCheckpoint
 import tensorflow as tf
 import tensorflow_addons as tfa
 import numpy as np
+import pandas as pd
 
 class ConvNet3D():
     def setup_model(self, X):
@@ -25,6 +27,7 @@ class ConvNet3D():
                 metrics=["categorical_accuracy", "categorical_crossentropy"])
         return(model)
 
+
     def evaluate_model(self, model, X, y_one_hot):
         def convert_to_np_array(array):
             array = np.array(array)
@@ -32,23 +35,23 @@ class ConvNet3D():
                 array[i]=np.array(array[i])
                 return array
                 
-        X_train, X_test, y_train, y_test = train_test_split(convert_to_np_array(X), y_one_hot,test_size=0.33)
-
+        X_train, X_testb, y_train, y_testb = train_test_split(convert_to_np_array(X), y_one_hot,test_size=0.33)
+                                      
         X_train = convert_to_np_array(X_train)
-        X_test = convert_to_np_array(X_test)
+        X_test = convert_to_np_array(X_testb)
         y_train = convert_to_np_array(y_train)
-        y_test = convert_to_np_array(y_test)
+        y_test = convert_to_np_array(y_testb)
         
         arr = np.array([image for sublist in X_train for image in sublist])
         arr = arr.reshape((len(X_train), *np.shape(X[0])))
 
-        hist = model.fit(x= arr,y=y_train, epochs=5)
+        hist = model.fit(x= arr,y=y_train, epochs=7)
 
         arr = np.array([image for sublist in X_test for image in sublist])
         arr = arr.reshape((len(X_test), *np.shape(X[0])))
-
+        
         _ = model.evaluate(x= arr,y=y_test)
-
+        
         preds = model.predict(arr)
     
         #LOGGING 
