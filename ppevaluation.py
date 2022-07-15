@@ -1,7 +1,6 @@
 from utils.dataloader import DataLoader
 from utils.logger import Logger
 from utils.preprocessing import Preprocessing
-from models.cnn2D import ConvNet2D
 from models.cnn3d import ConvNet3D
 from copy import deepcopy
 from traceback import format_exc
