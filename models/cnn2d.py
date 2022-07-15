@@ -17,7 +17,7 @@ import numpy as np
 
 class ConvNet2D():
     def setup_model(self, X,
-                    num_of_pred_classes = 5,
+                    num_of_pred_classes = 4,
                     dropoutRate = 0.225,
                     random_seed = 42):
 
@@ -66,10 +66,10 @@ class ConvNet2D():
 
 
     def evaluate_model(self, model, X, Y,
-                        path_load_save_model = "/home/vincent/Desktop/Models/test.hdf5",
-                        num_of_classes = 5,
+                        path_load_save_model = "/home/MODEL_NAME.hdf5",
+                        num_of_classes = 4,
                         batch_size = 2,
-                        epochs = 25):
+                        epochs = 30):
 
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state = 42, stratify = Y)
 
