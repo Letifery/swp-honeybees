@@ -5,6 +5,7 @@ from io import StringIO
 import tensorflow as tf
 import tensorflow_addons as tfa
 import numpy as np
+from keras.callbacks import ModelCheckpoint
 
 # Custom Activation Function GLU
 class GLU(tf.keras.layers.Layer):
@@ -33,20 +34,28 @@ class CNN_LSTM():
     def setup_model(self, X):
         no_classes = 4
         model = models.Sequential()
-        model.add(layers.ConvLSTM2D(filters=16,kernel_size=(3,3),input_shape =(*np.shape(X[0]), 1) ))
+        model.add(layers.ConvLSTM2D(filters=32,kernel_size=(3,3),input_shape =(*np.shape(X[0]), 1) ))
         model.add(layers.BatchNormalization())
 
-        model.add(layers.MaxPooling2D((3,3)))
-        model.add(layers.Dropout(0.05))
-        model.add(layers.Conv2D(16,3, activation= activations.relu))
+        model.add(layers.MaxPooling2D((2,2)))
+        model.add(layers.AlphaDropout(0.08))
+        model.add(layers.Conv2D(32,3, activation= activations.relu))
+        model.add(layers.AlphaDropout(0.05))
         model.add(layers.BatchNormalization())
-        model.add(layers.Dropout(0.02))
+        
+
+        model.add(layers.MaxPooling2D((2,2)))       
+        model.add(layers.AlphaDropout(0.05))
+        model.add(layers.Conv2D(24,3, activation= activations.relu))
+        model.add(layers.AlphaDropout(0.1))
+        model.add(layers.BatchNormalization())
+        
         model.add(layers.Activation(GLU(bias = False, dim=-1, name='glu')))
 
         model.add(layers.Flatten())
         model.add(layers.Dense(units=16, activation=activations.relu))
         model.add(layers.Dense(units=8, activation=tfa.activations.mish))
-        model.add(layers.Dense(units=no_classes, activation=activations.softmax))
+        model.add(layers.Dense(units=4, activation=activations.softmax))
 
         model.summary()
         model.compile(optimizer='adam',
@@ -54,7 +63,7 @@ class CNN_LSTM():
                 metrics=["categorical_accuracy", "categorical_crossentropy"])
         return(model)
 
-    def evaluate_model(self, model, X, y_one_hot):
+    def evaluate_model(self, model, X, y_one_hot, path_load_save_model = ""):
         def convert_to_np_array(array):
             array = np.array(array)
             for i in range(len(array)):
@@ -74,7 +83,13 @@ class CNN_LSTM():
         arr = np.array([image for sublist in X_test for image in sublist])
         X_test = arr.reshape((len(X_test), *np.shape(X[0])))
 
-        hist = model.fit(x= X_train,y=y_train, batch_size=20, epochs=15, validation_data=(X_test, y_test))
+        """callbacks = [ModelCheckpoint(filepath = path_load_save_model,
+                                         monitor = 'val_categorical_accuracy',
+                                         verbose = 1,
+                                         save_best_only = True,
+                                         mode = 'max')]"""
+
+        hist = model.fit(x= X_train,y=y_train, batch_size=20, epochs=20 )
 
         _ = model.evaluate(x= X_test,y=y_test)
 
