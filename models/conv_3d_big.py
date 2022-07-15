@@ -2,31 +2,34 @@ from sklearn.model_selection import train_test_split
 from keras import datasets, layers, models
 from io import StringIO
 
-from keras.callbacks import ModelCheckpoint
 import tensorflow as tf
 import tensorflow_addons as tfa
 import numpy as np
-import pandas as pd
 
-class ConvNet3D():
+class ConvNet3D_big():
     def setup_model(self, X):
+        no_classes = 4
         model = models.Sequential()
-        model.add(layers.Conv3D(16,3, activation='relu', input_shape =(*np.shape(X[0]), 1)))
+        model.add(layers.Conv3D(32,4, activation='relu', input_shape =(*np.shape(X[0]), 1),kernel_regularizer='l2'))
         model.add(layers.BatchNormalization())
-        model.add(layers.MaxPooling3D((2, 4, 4)))
-        model.add(layers.Conv3D(6,2, activation=tfa.activations.mish))
+        model.add(layers.MaxPooling3D((1,2, 2)))
+        model.add(layers.Conv3D(8,3, activation=tfa.activations.mish,kernel_regularizer='l2'))
         model.add(layers.BatchNormalization())
-    
-        model.add(layers.Flatten())
-        model.add(layers.Dense(8, activation='relu', kernel_initializer='he_uniform'))
-        model.add(layers.Dense(4, activation='softmax'))
+        model.add(layers.MaxPooling3D((2,3, 3)))
+        model.add(layers.Dropout(0.05))
+        model.add(layers.Conv3D(8,2, activation=tfa.activations.mish,kernel_regularizer='l2'))
+        model.add(layers.BatchNormalization())
+        model.add(layers.Dropout(0.02))
 
-        model.summary()
+        model.add(layers.Flatten())
+        model.add(layers.Dense(16, activation='relu', kernel_initializer='he_uniform',kernel_regularizer='l2'))
+        model.add(layers.Dense(no_classes, activation='softmax'))
+
+        #model.summary()
         model.compile(optimizer='adam',
                 loss='categorical_crossentropy',
                 metrics=["categorical_accuracy", "categorical_crossentropy"])
         return(model)
-
 
     def evaluate_model(self, model, X, y_one_hot):
         def convert_to_np_array(array):
@@ -35,23 +38,23 @@ class ConvNet3D():
                 array[i]=np.array(array[i])
                 return array
                 
-        X_train, X_testb, y_train, y_testb = train_test_split(convert_to_np_array(X), y_one_hot,test_size=0.33)
-                                      
+        X_train, X_test, y_train, y_test = train_test_split(convert_to_np_array(X), y_one_hot,test_size=0.33)
+
         X_train = convert_to_np_array(X_train)
-        X_test = convert_to_np_array(X_testb)
+        X_test = convert_to_np_array(X_test)
         y_train = convert_to_np_array(y_train)
-        y_test = convert_to_np_array(y_testb)
+        y_test = convert_to_np_array(y_test)
         
         arr = np.array([image for sublist in X_train for image in sublist])
         arr = arr.reshape((len(X_train), *np.shape(X[0])))
 
-        hist = model.fit(x= arr,y=y_train, epochs=7)
+        hist = model.fit(x= arr,y=y_train, epochs=5)
 
         arr = np.array([image for sublist in X_test for image in sublist])
         arr = arr.reshape((len(X_test), *np.shape(X[0])))
-        
+
         _ = model.evaluate(x= arr,y=y_test)
-        
+
         preds = model.predict(arr)
     
         #LOGGING 
@@ -63,25 +66,30 @@ class ConvNet3D():
         #[loss, Accuracy, ct], confusion_matrix, summary stream
         return([model.evaluate(x= arr,y=y_test), conf], summary_string)
 
-class ConvNet3D_small_less_pool():
+class ConvNet3D_big_less_pool():
     def setup_model(self, X):
+        no_classes = 4
         model = models.Sequential()
-        model.add(layers.Conv3D(16,3, activation='relu', input_shape =(*np.shape(X[0]), 1)))
+        model.add(layers.Conv3D(32,4, activation='relu', input_shape =(*np.shape(X[0]), 1),kernel_regularizer='l2'))
         model.add(layers.BatchNormalization())
-        model.add(layers.MaxPooling3D((1, 4, 4)))
-        model.add(layers.Conv3D(6,1, activation=tfa.activations.mish))
+        model.add(layers.MaxPooling3D((1,2, 2)))
+        model.add(layers.Conv3D(8,3, activation=tfa.activations.mish,kernel_regularizer='l2'))
         model.add(layers.BatchNormalization())
-    
-        model.add(layers.Flatten())
-        model.add(layers.Dense(8, activation='relu', kernel_initializer='he_uniform'))
-        model.add(layers.Dense(4, activation='softmax'))
+        model.add(layers.MaxPooling3D((1,3, 3)))
+        model.add(layers.Dropout(0.05))
+        model.add(layers.Conv3D(8,2, activation=tfa.activations.mish,kernel_regularizer='l2'))
+        model.add(layers.BatchNormalization())
+        model.add(layers.Dropout(0.02))
 
-        model.summary()
+        model.add(layers.Flatten())
+        model.add(layers.Dense(16, activation='relu', kernel_initializer='he_uniform',kernel_regularizer='l2'))
+        model.add(layers.Dense(no_classes, activation='softmax'))
+
+        #model.summary()
         model.compile(optimizer='adam',
                 loss='categorical_crossentropy',
                 metrics=["categorical_accuracy", "categorical_crossentropy"])
         return(model)
-
 
     def evaluate_model(self, model, X, y_one_hot):
         def convert_to_np_array(array):
@@ -90,23 +98,23 @@ class ConvNet3D_small_less_pool():
                 array[i]=np.array(array[i])
                 return array
                 
-        X_train, X_testb, y_train, y_testb = train_test_split(convert_to_np_array(X), y_one_hot,test_size=0.33)
-                                      
+        X_train, X_test, y_train, y_test = train_test_split(convert_to_np_array(X), y_one_hot,test_size=0.33)
+
         X_train = convert_to_np_array(X_train)
-        X_test = convert_to_np_array(X_testb)
+        X_test = convert_to_np_array(X_test)
         y_train = convert_to_np_array(y_train)
-        y_test = convert_to_np_array(y_testb)
+        y_test = convert_to_np_array(y_test)
         
         arr = np.array([image for sublist in X_train for image in sublist])
         arr = arr.reshape((len(X_train), *np.shape(X[0])))
-        
-        hist = model.fit(x= arr,y=y_train, epochs=7)
+
+        hist = model.fit(x= arr,y=y_train, epochs=5)
 
         arr = np.array([image for sublist in X_test for image in sublist])
         arr = arr.reshape((len(X_test), *np.shape(X[0])))
-        
+
         _ = model.evaluate(x= arr,y=y_test)
-        
+
         preds = model.predict(arr)
     
         #LOGGING 
@@ -118,25 +126,30 @@ class ConvNet3D_small_less_pool():
         #[loss, Accuracy, ct], confusion_matrix, summary stream
         return([model.evaluate(x= arr,y=y_test), conf], summary_string)
 
-class ConvNet3D_small_no_pool():
+class ConvNet3D_big_no_pool():
     def setup_model(self, X):
+        no_classes = 4
         model = models.Sequential()
-        model.add(layers.Conv3D(16,1, activation='relu', input_shape =(*np.shape(X[0]), 1)))
+        model.add(layers.Conv3D(32,1, activation='relu', input_shape =(*np.shape(X[0]), 1),kernel_regularizer='l2'))
         model.add(layers.BatchNormalization())
-        model.add(layers.MaxPooling3D((1, 4, 4)))
-        model.add(layers.Conv3D(6,1, activation=tfa.activations.mish))
+        model.add(layers.MaxPooling3D((1,2, 2)))
+        model.add(layers.Conv3D(8,1, activation=tfa.activations.mish,kernel_regularizer='l2'))
         model.add(layers.BatchNormalization())
-    
-        model.add(layers.Flatten())
-        model.add(layers.Dense(8, activation='relu', kernel_initializer='he_uniform'))
-        model.add(layers.Dense(4, activation='softmax'))
+        model.add(layers.MaxPooling3D((1,3, 3)))
+        model.add(layers.Dropout(0.05))
+        model.add(layers.Conv3D(8,1, activation=tfa.activations.mish,kernel_regularizer='l2'))
+        model.add(layers.BatchNormalization())
+        model.add(layers.Dropout(0.02))
 
-        model.summary()
+        model.add(layers.Flatten())
+        model.add(layers.Dense(16, activation='relu', kernel_initializer='he_uniform',kernel_regularizer='l2'))
+        model.add(layers.Dense(no_classes, activation='softmax'))
+
+        #model.summary()
         model.compile(optimizer='adam',
                 loss='categorical_crossentropy',
                 metrics=["categorical_accuracy", "categorical_crossentropy"])
         return(model)
-
 
     def evaluate_model(self, model, X, y_one_hot):
         def convert_to_np_array(array):
@@ -145,23 +158,23 @@ class ConvNet3D_small_no_pool():
                 array[i]=np.array(array[i])
                 return array
                 
-        X_train, X_testb, y_train, y_testb = train_test_split(convert_to_np_array(X), y_one_hot,test_size=0.33)
-                                      
+        X_train, X_test, y_train, y_test = train_test_split(convert_to_np_array(X), y_one_hot,test_size=0.33)
+
         X_train = convert_to_np_array(X_train)
-        X_test = convert_to_np_array(X_testb)
+        X_test = convert_to_np_array(X_test)
         y_train = convert_to_np_array(y_train)
-        y_test = convert_to_np_array(y_testb)
+        y_test = convert_to_np_array(y_test)
         
         arr = np.array([image for sublist in X_train for image in sublist])
         arr = arr.reshape((len(X_train), *np.shape(X[0])))
-        
-        hist = model.fit(x= arr,y=y_train, epochs=7)
+
+        hist = model.fit(x= arr,y=y_train, epochs=5)
 
         arr = np.array([image for sublist in X_test for image in sublist])
         arr = arr.reshape((len(X_test), *np.shape(X[0])))
-        
+
         _ = model.evaluate(x= arr,y=y_test)
-        
+
         preds = model.predict(arr)
     
         #LOGGING 

@@ -6,7 +6,30 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 import numpy as np
 
-class ConvNet3D_big():
+# Custom Activation Function GLU
+class GLU(tf.keras.layers.Layer):
+    def __init__(self, bias=True, dim=-1, **kwargs):
+        super(GLU, self).__init__(**kwargs)
+        self.bias = bias
+        self.dim = dim
+        self.dense = tf.keras.layers.Dense(2, use_bias=bias)
+
+    def call(self, x):
+        out, gate = tf.split(x, 2, self.dim)
+        gate = tf.sigmoid(gate)
+        x = tf.multiply(out, gate)
+        return x
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            "bias": self.bias,
+            "dim": self.dim,
+            "dense": self.dense,
+        })
+        return config
+
+class ConvNet3D_big_gated():
     def setup_model(self, X):
         no_classes = 4
         model = models.Sequential()
@@ -20,6 +43,7 @@ class ConvNet3D_big():
         model.add(layers.Conv3D(8,2, activation=tfa.activations.mish,kernel_regularizer='l2'))
         model.add(layers.BatchNormalization())
         model.add(layers.Dropout(0.02))
+        model.add(layers.Activation(GLU(bias = False, dim=-1, name='glu')))
 
         model.add(layers.Flatten())
         model.add(layers.Dense(16, activation='relu', kernel_initializer='he_uniform',kernel_regularizer='l2'))

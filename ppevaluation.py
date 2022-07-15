@@ -1,7 +1,6 @@
 from utils.dataloader import DataLoader
 from utils.logger import Logger
 from utils.preprocessing import Preprocessing
-from models.cnn2D import ConvNet2D
 from models.cnn3d import ConvNet3D
 from copy import deepcopy
 from traceback import format_exc
@@ -41,7 +40,7 @@ def aggregate_data(data, pickle_file):
     return (images, (angles, classes), json_files, paths)
     
 #setup
-MODEL_NAME = "TESTcnn3D-mv2"
+MODEL_NAME = "finalcnn3d"
 
 PATH_DATA = r"I:\tmp_swp\wdd_ground_truth"
 PATH_PICKLE = r"I:\tmp_swp\ground_truth_wdd_angles.pickle"
@@ -95,20 +94,26 @@ for i in range(len(hyper_X)):
         runtimes[3] = time.time()-(t+sum(runtimes))
         
     except tf.errors.ResourceExhaustedError:
-        with tf.device('/cpu:0'):
-            print("\033[93m[WARNING] Could not use CUDA for testset iteration %s, will switch to CPU instead\033[0m" % i)
-            OOM_interrupt = 1
-            t = time.time()
-            results, summary_string = cmodel.evaluate_model(model, X_pp, y_one_hot)
-            runtimes[3] = time.time()-t
+        try:
+            with tf.device('/cpu:0'):
+                print("\033[93m[WARNING] Could not use CUDA for testset iteration %s, will switch to CPU instead\033[0m" % i)
+                OOM_interrupt = 1
+                t = time.time()
+                results, summary_string = cmodel.evaluate_model(model, X_pp, y_one_hot)
+                runtimes[3] = time.time()-t
+        except Exception:
+            data_logger.log_data([[(i+id_start)]+["ERROR"]*11], "datalogs_%s" % MODEL_NAME)
+            summary_logger.log_data([[format_exc()]], "datalogs_%s" % MODEL_NAME)
+            continue
     except Exception:
         data_logger.log_data([[(i+id_start)]+["ERROR"]*11], "datalogs_%s" % MODEL_NAME)
         summary_logger.log_data([[format_exc()]], "datalogs_%s" % MODEL_NAME)
-    else:
-        data_logger.log_data([[(i+id_start), OOM_interrupt, sum(runtimes), *results[0], *runtimes, 
+        continue
+    
+    data_logger.log_data([[(i+id_start), OOM_interrupt, sum(runtimes), *results[0], *runtimes, 
                             str(hyper_X[i]), str(results[1])]], "datalogs_%s" % MODEL_NAME)
-        summary_logger.log_data([[summary_string]], "datalogs_%s" % MODEL_NAME)
-        del cmodel, pp, summary_logger
-    finally:
-        gc.collect()
+    summary_logger.log_data([[summary_string]], "datalogs_%s" % MODEL_NAME)
+    del cmodel, pp, summary_logger
+    gc.collect()
 
+    
