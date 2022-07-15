@@ -20,7 +20,6 @@ class GLU(tf.keras.layers.Layer):
         config = super().get_config()
         config.update({
             "bias": self.bias,
-            "dim": self.dim,
-            "dense": self.dense,
+            "dim": self.dim
         })
         return config
