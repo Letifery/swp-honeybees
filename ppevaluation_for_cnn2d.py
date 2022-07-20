@@ -29,12 +29,12 @@ def aggregate_data(data, pickle_file):
     return (images, (angles, classes), json_files, paths)
 
 #setup
-MODEL_NAME = "cnn2d_independent"
+MODEL_NAME = "cnn2d_v3"
 
-PATH_DATA = r"I:\tmp_swp\wdd_ground_truth"
-PATH_PICKLE = r"I:\tmp_swp\ground_truth_wdd_angles.pickle"
-PATH_TESTSUITE = r"I:\tmp_swp\data\pptestsuite.json"
-PATH_SAVE_MODEL = "I:\tmp\MODEL_NAME.hdf5"
+PATH_DATA = r"/home/max/Downloads/wdd_ground_truth"
+PATH_PICKLE = r"/home/max/Downloads/ground_truth_wdd_angles.pickle"
+PATH_TESTSUITE = r"/home/max/Dokumente/GitHub/swp-honeybees/data/pptestsuite_for_ConvNet2D.json"
+PATH_SAVE_MODEL = "/home/max/Dokumente/GitHub/swp-honeybees/model_saves/Conv2D.hdf5"
 
 
 dl = DataLoader()

@@ -89,7 +89,7 @@ class CNN_LSTM():
                                          save_best_only = True,
                                          mode = 'max')]"""
 
-        hist = model.fit(x= X_train,y=y_train, batch_size=20, epochs=20 )
+        hist = model.fit(x= X_train,y=y_train, batch_size=20, epochs=17 )
 
         _ = model.evaluate(x= X_test,y=y_test)
 

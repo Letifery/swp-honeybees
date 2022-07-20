@@ -1,7 +1,11 @@
 from utils.dataloader import DataLoader
 from utils.logger import Logger
 from utils.preprocessing import Preprocessing
-from models.cnn3d import ConvNet3D
+#from models.cnn3d import ConvNet3D
+#from models.CNN_LSTM import CNN_LSTM
+from models.conv_3d_big_gated import ConvNet3D_big_gated
+from models.conv_3d_big_gated import ConvNet3D_big_gated_less_pool
+from models.conv_3d_big_gated import ConvNet3D_big_gated_no_pool
 from copy import deepcopy
 from traceback import format_exc
 
@@ -40,11 +44,11 @@ def aggregate_data(data, pickle_file):
     return (images, (angles, classes), json_files, paths)
     
 #setup
-MODEL_NAME = "finalcnn3d"
+MODEL_NAME = "Preprocessing"
 
-PATH_DATA = r"I:\tmp_swp\wdd_ground_truth"
-PATH_PICKLE = r"I:\tmp_swp\ground_truth_wdd_angles.pickle"
-PATH_TESTSUITE = r"I:\tmp_swp\data\pptestsuite.json"
+PATH_DATA = r"/home/max/Downloads/wdd_ground_truth"
+PATH_PICKLE = r"/home/max/Downloads/ground_truth_wdd_angles.pickle"
+PATH_TESTSUITE = r"/home/max/Dokumente/GitHub/swp-honeybees/data/pptestsuite.json"
 
 dl = DataLoader()
 data_logger = Logger("review_%s.log" % MODEL_NAME)
@@ -70,7 +74,7 @@ X, Y, json_files, paths = aggregate_data(data, pickle_file)
 Y_classes, Y_angles = Y[1], Y[0]
 y_one_hot, _ = y_to_numbers(Y_classes)
 
-hyper_X = list(dl.get_json([PATH_TESTSUITE]))[0]["testsuiteA"]
+hyper_X = list(dl.get_json([PATH_TESTSUITE]))[0]["testsuitePreprocess"]
 
 for i in range(len(hyper_X)):
     OOM_interrupt = 0
@@ -79,7 +83,7 @@ for i in range(len(hyper_X)):
     try:
         t = time.time()
         Xtmp = deepcopy(X)
-        cmodel = ConvNet3D()
+        cmodel = ConvNet3D_big_gated_less_pool()
         pp = Preprocessing(Xtmp)
         summary_logger = Logger("summary_%s_%s.log" % ((i+id_start), MODEL_NAME))
         runtimes[0] = time.time()-t

@@ -1,0 +1,5 @@
+{
+    "testsuiteA": [
+        [["cut", [0,160]], ["slice_r", [30, "endStart"]], ["norm_crop", [55,55]]]
+    ]
+}
